@@ -1,62 +1,92 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"math"
 	"os"
-	"slices"
+	"sort"
 	"strconv"
 	"strings"
 )
 
 func main() {
-	input, err := os.ReadFile("input1.txt")
-
+	input, err := os.ReadFile("input.txt")
 	if err != nil {
-		panic(err)
+		log.Fatalf("Failed to read input file: %v", err)
 	}
 
-	list := strings.Fields(string(input))
+	values := parseInput(strings.Fields(string(input)))
 
-	var firstList, secondList []int
+	firstList, secondList := splitLists(values)
 
-	for i, val := range list {
-		intVal, err := strconv.Atoi(val)
+	sort.Ints(firstList)
+	sort.Ints(secondList)
+
+	distances := calculateDistances(firstList, secondList)
+
+	frequencyMap := buildFrequencyMap(secondList)
+	score := calculateScore(firstList, frequencyMap)
+
+	totalDistance := sumSlice(distances)
+
+	fmt.Printf("Score: %d\n", score)
+	fmt.Printf("Total Distance: %d\n", totalDistance)
+}
+
+func parseInput(stringsList []string) []int {
+	values := make([]int, len(stringsList))
+	for i, str := range stringsList {
+		val, err := strconv.Atoi(str)
 		if err != nil {
-			panic(err)
+			log.Fatalf("Invalid number in input: %v", err)
 		}
+		values[i] = val
+	}
+	return values
+}
 
+func splitLists(values []int) (firstList, secondList []int) {
+	firstList = make([]int, 0, len(values)/2)
+	secondList = make([]int, 0, len(values)/2)
+	for i, val := range values {
 		if i%2 == 0 {
-			firstList = append(firstList, intVal)
+			firstList = append(firstList, val)
 		} else {
-			secondList = append(secondList, intVal)
+			secondList = append(secondList, val)
 		}
 	}
+	return
+}
 
-	slices.Sort(firstList)
-	slices.Sort(secondList)
-
-	var distances []int
-
-	for i := 0; i < len(firstList); i++ {
-		distance := math.Abs(float64(firstList[i] - secondList[i]))
-		distances = append(distances, int(distance))
+func calculateDistances(firstList, secondList []int) []int {
+	distances := make([]int, len(firstList))
+	for i := range firstList {
+		distances[i] = int(math.Abs(float64(firstList[i] - secondList[i])))
 	}
+	return distances
+}
 
+func buildFrequencyMap(values []int) map[int]int {
 	frequencyMap := make(map[int]int)
-
-	for _, val := range secondList {
+	for _, val := range values {
 		frequencyMap[val]++
 	}
+	return frequencyMap
+}
 
+func calculateScore(firstList []int, frequencyMap map[int]int) int {
 	score := 0
 	for _, val := range firstList {
-		count := frequencyMap[val]
-		score += val * count
+		score += val * frequencyMap[val]
 	}
+	return score
+}
 
+func sumSlice(values []int) int {
 	total := 0
-
-	for _, val := range distances {
+	for _, val := range values {
 		total += val
 	}
+	return total
 }
