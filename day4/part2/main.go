@@ -40,7 +40,7 @@ func countOccurrences(grid [][]rune) int {
 }
 
 func main() {
-	file, err := os.Open("input1.txt")
+	file, err := os.Open("input.txt")
 	if err != nil {
 		log.Fatalf("Error with file: %v", err)
 	}
