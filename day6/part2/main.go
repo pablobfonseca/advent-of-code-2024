@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 )
 
 type VisitedKey struct {
@@ -95,21 +96,31 @@ func main() {
 	startPos := grid.find('^')
 	visited := getVisited(grid, startPos)
 
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
 	loopCount := 0
 
 	for _, pos := range visited {
-		originalChar := grid.data[pos.row][pos.col]
+		wg.Add(1)
+		go func(pos Position) {
+			defer wg.Done()
 
-		grid.data[pos.row][pos.col] = '#'
+			originalChar := grid.data[pos.row][pos.col]
 
-		isLooping := isALoop(grid, startPos)
+			grid.data[pos.row][pos.col] = '#'
 
-		if isLooping {
-			loopCount++
-		}
+			if isALoop(grid, startPos) {
+				mu.Lock()
+				loopCount++
+				mu.Unlock()
 
-		grid.data[pos.row][pos.col] = originalChar
+			}
+			grid.data[pos.row][pos.col] = originalChar
+		}(pos)
 	}
+
+	wg.Wait()
 
 	fmt.Printf("Loops: %v\n", loopCount)
 	fmt.Printf("Total: %d\n", len(visited))
